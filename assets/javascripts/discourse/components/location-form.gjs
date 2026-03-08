@@ -13,6 +13,7 @@ import { ajax } from "discourse/lib/ajax";
 import ComboBox from "discourse/select-kit/components/combo-box";
 import { i18n } from "discourse-i18n";
 import { geoLocationSearch, providerDetails } from "../lib/location-utilities";
+import { resolvePrefectureName } from "../lib/jp-location-options";
 import GeoLocationResult from "./geo-location-result";
 import LocationSelector from "./location-selector";
 
@@ -35,6 +36,7 @@ export default class LocationForm extends Component {
   @tracked formPostalcode;
   @tracked formCity;
   @tracked formState;
+  @tracked formQuery;
   @tracked formCountrycode;
   @tracked formLatitude;
   @tracked formLongitude;
@@ -46,6 +48,12 @@ export default class LocationForm extends Component {
 
   constructor() {
     super(...arguments);
+    this.context = this.args.context || null;
+    this.formQuery = this.args.rawLocation || "";
+    this.formCountrycode =
+      this.args.countrycode ||
+      this.siteSettings.location_country_default ||
+      "jp";
 
     if (this.showInputFields) {
       this.internalInputFields = this.args.inputFields;
@@ -62,6 +70,9 @@ export default class LocationForm extends Component {
           this.searchDisabled = false;
         }
       });
+      if (this.useRegionSelectors) {
+        this.searchDisabled = false;
+      }
 
       if (this.args.disabledFields) {
         this.args.disabledFields.forEach((f) => {
@@ -118,6 +129,18 @@ export default class LocationForm extends Component {
     );
   }
 
+  get useRegionSelectors() {
+    return Boolean(this.args.useRegionSelectors);
+  }
+
+  get stateSelectDisabled() {
+    return Boolean(this.stateDisabled || this.args.lockRegionFields);
+  }
+
+  get citySelectDisabled() {
+    return Boolean(this.cityDisabled || this.args.lockRegionFields);
+  }
+
   get providerDetails() {
     return providerDetails[
       this.provider || this.siteSettings.location_geocoding_provider
@@ -165,6 +188,22 @@ export default class LocationForm extends Component {
           gl[f];
       }
     });
+    if (this.useRegionSelectors) {
+      const inferredStateFromAddress =
+        String(gl.address || "").match(
+          /(東京都|北海道|(?:京都|大阪)府|[^都道府県县縣\s,，]{1,8}[県县縣])/
+        )?.[1] || "";
+      const resolvedState = resolvePrefectureName(
+        gl.state ||
+          gl.province ||
+          gl.region ||
+          gl.county ||
+          inferredStateFromAddress
+      );
+      const resolvedCity = gl.city || gl.district || "";
+      this.formState = resolvedState || "";
+      this.formCity = String(resolvedCity).trim();
+    }
 
     this.args.setGeoLocation(gl);
     this.geoLocationOptions.forEach((o) => {
@@ -179,21 +218,55 @@ export default class LocationForm extends Component {
   }
 
   @action
+  handleStateChange(value) {
+    this.formState = value;
+    if (this.args.onStateChange) {
+      this.args.onStateChange(value);
+    }
+  }
+
+  @action
+  handleCityChange(value) {
+    this.formCity = value;
+    if (this.args.onCityChange) {
+      this.args.onCityChange(value);
+    }
+  }
+
+  @action
+  handleCityInput(event) {
+    const value = event?.target?.value || "";
+    this.formCity = value;
+    if (this.args.onCityChange) {
+      this.args.onCityChange(value);
+    }
+  }
+
+  @action
   locationSearch() {
     let request = {};
 
-    const searchInputFields = this.internalInputFields.concat([
-      "countrycode",
-      "context",
-    ]);
-    searchInputFields.map((f) => {
-      request[f] =
-        this[`form${f.charAt(0).toUpperCase() + f.substr(1).toLowerCase()}`];
-      if (f === "coordinates") {
-        request["lat"] = this.formLatitude;
-        request["lon"] = this.formLongitude;
-      }
-    });
+    if (this.useRegionSelectors) {
+      request.query = String(this.formQuery || "").trim();
+      request.countrycode = this.formCountrycode;
+      request.context = this.context;
+      request.language = "ja";
+      if (this.formState) request.state = this.formState;
+      if (this.formCity) request.city = this.formCity;
+    } else {
+      const searchInputFields = this.internalInputFields.concat([
+        "countrycode",
+        "context",
+      ]);
+      searchInputFields.map((f) => {
+        request[f] =
+          this[`form${f.charAt(0).toUpperCase() + f.substr(1).toLowerCase()}`];
+        if (f === "coordinates") {
+          request["lat"] = this.formLatitude;
+          request["lon"] = this.formLongitude;
+        }
+      });
+    }
 
     if (
       !Object.values(request).some(
@@ -201,6 +274,12 @@ export default class LocationForm extends Component {
       )
     ) {
       return;
+    }
+
+    if (this.useRegionSelectors && !request.query) {
+      if (this.formCity || this.formState) {
+        request.query = [this.formCity, this.formState].filter(Boolean).join(" ");
+      }
     }
 
     this.showLocationResults = true;
@@ -222,9 +301,27 @@ export default class LocationForm extends Component {
           this.provider = result.provider;
         }
 
-        this.showProvider = result.locations.length > 0;
+        const normalizeAddress = (value) =>
+          String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[，､]/g, ",")
+            .replace(/\s+/g, " ");
+        const seen = new Set();
+        const dedupedLocations = (result.locations || []).filter((location) => {
+          const normalizedAddress = normalizeAddress(location.address);
+          const key =
+            normalizedAddress ||
+            [String(location.lat || "").trim(), String(location.lon || "").trim()].join("|");
+          if (seen.has(key)) {
+            return false;
+          }
+          seen.add(key);
+          return true;
+        });
 
-        this.geoLocationOptions = [...result.locations];
+        this.showProvider = dedupedLocations.length > 0;
+        this.geoLocationOptions = [...dedupedLocations];
 
         this.loadingLocations = false;
       })
@@ -294,35 +391,74 @@ export default class LocationForm extends Component {
                   }}</div>
               </div>
             {{/if}}
+            {{#if this.showState}}
+              {{#if this.useRegionSelectors}}
+                <div class="control-group">
+                  <label class="control-label">{{i18n "location.query.title"}}</label>
+                  <div class="controls">
+                    <Input
+                      @type="text"
+                      @value={{this.formQuery}}
+                      class="input-xxlarge input-location"
+                    />
+                  </div>
+                  <div class="instructions">{{i18n "location.query.desc"}}</div>
+                </div>
+              {{/if}}
+              <div class="control-group">
+                <label class="control-label">{{i18n
+                    "location.state.title"
+                  }}</label>
+                <div class="controls">
+                  {{#if this.useRegionSelectors}}
+                    <ComboBox
+                      @valueProperty="code"
+                      @nameProperty="name"
+                      @content={{@stateOptions}}
+                      @value={{this.formState}}
+                      class="input-location prefecture-select"
+                      @onChange={{this.handleStateChange}}
+                      @options={{hash
+                        filterable="true"
+                        disabled=this.stateSelectDisabled
+                        none="location.state.title"
+                      }}
+                    />
+                  {{else}}
+                    <Input
+                      @value={{this.formState}}
+                      class="input-large input-location"
+                      disabled={{this.stateDisabled}}
+                    />
+                  {{/if}}
+                </div>
+                <div class="instructions">{{i18n "location.state.desc"}}</div>
+              </div>
+            {{/if}}
             {{#if this.showCity}}
               <div class="control-group">
                 <label class="control-label">{{i18n
                     "location.city.title"
                   }}</label>
                 <div class="controls">
-                  <Input
-                    @type="text"
-                    @value={{this.formCity}}
-                    class="input-large input-location"
-                    disabled={{this.cityDisabled}}
-                  />
+                  {{#if this.useRegionSelectors}}
+                    <Input
+                      @type="text"
+                      @value={{this.formCity}}
+                      class="input-large input-location city-input"
+                      disabled={{this.citySelectDisabled}}
+                      {{on "input" this.handleCityInput}}
+                    />
+                  {{else}}
+                    <Input
+                      @type="text"
+                      @value={{this.formCity}}
+                      class="input-large input-location"
+                      disabled={{this.cityDisabled}}
+                    />
+                  {{/if}}
                 </div>
                 <div class="instructions">{{i18n "location.city.desc"}}</div>
-              </div>
-            {{/if}}
-            {{#if this.showState}}
-              <div class="control-group">
-                <label class="control-label">{{i18n
-                    "location.state.title"
-                  }}</label>
-                <div class="controls">
-                  <Input
-                    @value={{@state}}
-                    class="input-large input-location"
-                    disabled={{this.stateDisabled}}
-                  />
-                </div>
-                <div class="instructions">{{i18n "location.state.desc"}}</div>
               </div>
             {{/if}}
             {{#if this.showCountrycode}}

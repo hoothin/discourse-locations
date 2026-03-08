@@ -1,14 +1,18 @@
-import Component from "@glimmer/component";
+﻿import Component from "@glimmer/component";
 import DModal from "discourse/components/d-modal";
 import { i18n } from "discourse-i18n";
 import LocationsMap from "./../locations-map";
 
 export default class LocationsTopicMapModalComponent extends Component {
   get topic() {
-    return this.args.model.topic;
+    return this.args?.model?.topic;
   }
 
   get title() {
+    if (!this.topic?.title) {
+      return "";
+    }
+
     return i18n("map.topic_modal.label", {
       topic_title: this.topic.title,
     });

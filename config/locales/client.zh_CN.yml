@@ -1,9 +1,9 @@
 zh_CN:
   js:
     category:
-      location_enabled: "允许在本分类的主题中插入位置。"
-      location_topic_status: "为本分类的题中启用位置状态图标。"
-      location_map_filter_closed: "将本分类中被关闭的主题过滤出地图主题列表。"
+      location_enabled: "允许在本分类的主题中添加位置。"
+      location_topic_status: "在本分类的主题列表中启用位置状态图标。"
+      location_map_filter_closed: "在地图主题列表中过滤已关闭的主题。"
     composer:
       location:
         btn: "添加位置"
@@ -12,35 +12,35 @@ zh_CN:
       address: "地址"
       name:
         title: "名称（可选）"
-        desc: "如：补牙张医生"
+        desc: "如：扶桑不动产"
       street:
         title: "街道和门牌号"
-        desc: "如：宛平南路600号"
+        desc: "如：中央1-2-3"
       postalcode:
         title: "邮政编码"
-        desc: "如：100025"
+        desc: "如：160-0023"
       neighbourhood:
-        title: "小区"
-        desc: "如：中南海"
+        title: "区域/町名"
+        desc: "如：世田谷区"
       city:
-        title: "城/镇/村"
-        desc: "如：新乡"
+        title: "城市/区町村"
+        desc: "如：东京都"
       state:
-        title: "省"
-        desc: "如：海南"
+        title: "都道府县"
+        desc: "如：东京都"
       country_code:
         title: "国家"
-        placeholder: "选择一个国家"
+        placeholder: "选择国家"
       coordinates: "坐标"
       lat:
         title: "纬度"
-        desc: "如：-31.9456702"
+        desc: "如：33.5500"
       lon:
         title: "经度"
-        desc: "如：115.8626477"
+        desc: "如：130.4167"
       query:
         title: "地址"
-        desc: "如：新乡市宛平南路600号"
+        desc: "如：东京都世田谷区三轩茶屋"
       geo:
         desc: "位置由 {{provider}} 提供"
         btn:
@@ -51,26 +51,28 @@ zh_CN:
       label:
         add: "添加位置"
         title: "显示位置详情"
+      validation:
+        state: "请输入省/都道府县。"
       clear: "清除"
       done: "完成"
       errors:
-        search: "寻找给定的地址时出了些幺蛾子。请过 5 秒重试。"
+        search: "查询地址时出现问题，请等待 5 秒后重试。"
 
     filters:
       map:
         title: "地图"
-        help: "在地图上标记出本分类中有位置的主题。"
+        help: "在地图上标记本分类中带有位置的主题。"
     map:
       search_placeholder: "搜索"
 
     topic_statuses:
       location:
-        help: "该主题有位置。"
+        help: "该主题包含位置。"
 
     user:
       map_location:
         title: "地图位置"
-        warning: 您给出的位置会公开显示。
+        warning: "你的位置将公开显示。"
 
     directory:
       map:

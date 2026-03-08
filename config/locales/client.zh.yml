@@ -1,83 +1,85 @@
 zh-CN:
   js:
     category:
-      location_settings_label: "Locations"
-      location_enabled: "Allow locations to be added to topics in this category"
-      location_topic_status: "Enable location topic status icons for topic lists in this category."
-      location_map_filter_closed: "Filter closed topics from the map topic list in this category."
+      location_settings_label: "位置"
+      location_enabled: "允許在此分類的主題中加入位置。"
+      location_topic_status: "在此分類的主題列表中啟用位置狀態圖示。"
+      location_map_filter_closed: "在地圖主題列表中過濾已關閉的主題。"
     composer:
       location:
-        btn: "Add Location"
-        title: "Add a Location"
+        btn: "新增位置"
+        title: "新增一個位置"
     location:
-      address: "Address"
+      address: "地址"
       name:
-        title: "Name (optional)"
-        desc: "e.g. P. Sherman Dentist"
+        title: "名稱（選填）"
+        desc: "例如：扶桑不動產"
       street:
-        title: "Number and Street"
-        desc: "e.g. 42 Wallaby Way"
+        title: "門牌與街道"
+        desc: "例如：中央1-2-3"
       postalcode:
-        title: "Postal Code (Zip)"
-        desc: "e.g. 2548"
+        title: "郵遞區號"
+        desc: "例如：160-0023"
       neighbourhood:
-        title: "Neighbourhood"
-        desc: "e.g. Cremorne Point"
+        title: "區域／町名"
+        desc: "例如：世田谷區"
       city:
-        title: "City, Town or Village"
-        desc: "e.g. Sydney"
+        title: "城市／區町村"
+        desc: "例如：東京都"
       state:
-        title: "State or Province"
-        desc: "e.g. New South Wales"
+        title: "都道府縣"
+        desc: "例如：東京都"
       country_code:
-        title: "Country"
-        placeholder: "Select a Country"
-      coordinates: "Coordinates"
+        title: "國家"
+        placeholder: "請選擇國家"
+      coordinates: "座標"
       lat:
-        title: "Latitude"
-        desc: "e.g. -31.9456702"
+        title: "緯度"
+        desc: "例如：33.5500"
       lon:
-        title: "Longitude"
-        desc: "e.g. 115.8626477"
+        title: "經度"
+        desc: "例如：130.4167"
       query:
-        title: "Address"
-        desc: "e.g. 42 Wallaby Way, Sydney."
+        title: "地址"
+        desc: "例如：東京都世田谷區三軒茶屋"
       geo:
-        desc: "Locations provided by {{provider}}"
+        desc: "位置資料由 {{provider}} 提供"
         btn:
-          label: "Find Address"
-        results: "Addresses"
-        no_results: "No results."
-        show_map: "Show Map"
-        hide_map: "Hide Map"
+          label: "查找地址"
+        results: "地址結果"
+        no_results: "無結果。"
+        show_map: "顯示地圖"
+        hide_map: "隱藏地圖"
       label:
-        add: "Add a Location"
-        title: "Show Location Details"
-      clear: "Clear"
-      done: "Done"
+        add: "新增位置"
+        title: "顯示位置詳情"
+      validation:
+        state: "請輸入省／都道府縣。"
+      clear: "清除"
+      done: "完成"
       errors:
-        search: "There was a problem looking up that address. Please wait 5 seconds and try again."
+        search: "查詢此地址時發生問題。請等待 5 秒後再試。"
     filters:
       map:
-        title: "Map"
-        help: "Mark topics with locations in this category on a map."
+        title: "地圖"
+        help: "在地圖上標記此分類中帶有位置的主題。"
     map:
-      search_placeholder: "Search"
+      search_placeholder: "搜尋"
     topic_statuses:
       location:
-        help: "This topic has a location."
+        help: "此主題包含位置資訊。"
     user:
       map_location:
-        title: "Map Location"
-        warning: Your location will be displayed publicly.
+        title: "地圖位置"
+        warning: "你的位置會公開顯示。"
     directory:
       map:
-        title: "Users Map"
+        title: "使用者地圖"
       list:
-        title: "Users List"
+        title: "使用者列表"
   admin_js:
     admin:
       wizard:
         field:
           type:
-            location: "Location (Locations Plugin)"
+            location: "位置（Locations 外掛）"

@@ -54,6 +54,8 @@ en:
       label:
         add: "Add a Location"
         title: "Show Location Details"
+      validation:
+        state: "Please enter a state, province, or prefecture."
       clear: "Clear"
       done: "Done"
       errors:

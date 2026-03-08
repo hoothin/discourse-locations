@@ -65,7 +65,10 @@ module ::Locations
       context = request['context']
 
       language = SiteSetting.location_geocoding_language
-      if language == 'user' || language == :user
+      requested_language = request['language'].presence
+      if requested_language
+        options = { language: requested_language }
+      elsif language == 'user' || language == :user
         options = { language: user.effective_locale }
       else
         options = { language: SiteSetting.default_locale }
