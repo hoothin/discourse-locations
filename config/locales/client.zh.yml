@@ -18,17 +18,17 @@ zh-CN:
         title: "門牌與街道"
         desc: "例如：中央1-2-3"
       postalcode:
-        title: "郵遞區號"
-        desc: "例如：160-0023"
+        title: "郵遞區號（選填）"
+        desc: "可用於搜尋精確位置，例如：160-0023"
       neighbourhood:
         title: "區域／町名"
         desc: "例如：世田谷區"
       city:
         title: "城市／區町村"
-        desc: "例如：東京都"
+        desc: "可從建議選擇，也可自由輸入，例如：新宿區"
       state:
         title: "都道府縣"
-        desc: "例如：東京都"
+        desc: "先選擇都道府縣，用於地區篩選。"
       country_code:
         title: "國家"
         placeholder: "請選擇國家"
@@ -40,13 +40,13 @@ zh-CN:
         title: "經度"
         desc: "例如：130.4167"
       query:
-        title: "地址"
-        desc: "例如：東京都世田谷區三軒茶屋"
+        title: "詳細地址（選填）"
+        desc: "可輸入車站、町名或門牌，僅用於搜尋精確位置。"
       geo:
         desc: "位置資料由 {{provider}} 提供"
         btn:
-          label: "查找地址"
-        results: "地址結果"
+          label: "搜尋精確位置"
+        results: "精確位置結果"
         no_results: "無結果。"
         area_fallback: "可使用目前選擇的都道府縣與市區町村發布。"
         show_map: "顯示地圖"

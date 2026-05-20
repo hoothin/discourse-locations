@@ -17,17 +17,17 @@ zh_CN:
         title: "街道和门牌号"
         desc: "如：中央1-2-3"
       postalcode:
-        title: "邮政编码"
-        desc: "如：160-0023"
+        title: "邮政编码（可选）"
+        desc: "可用于搜索精确位置，如：160-0023"
       neighbourhood:
         title: "区域/町名"
         desc: "如：世田谷区"
       city:
         title: "城市/区町村"
-        desc: "如：东京都"
+        desc: "可从建议选择，也可自由输入，如：新宿区"
       state:
         title: "都道府县"
-        desc: "如：东京都"
+        desc: "先选择都道府县，用于地区筛选。"
       country_code:
         title: "国家"
         placeholder: "选择国家"
@@ -39,13 +39,13 @@ zh_CN:
         title: "经度"
         desc: "如：130.4167"
       query:
-        title: "地址"
-        desc: "如：东京都世田谷区三轩茶屋"
+        title: "详细地址（可选）"
+        desc: "可输入车站、町名或门牌，仅用于搜索精确位置。"
       geo:
         desc: "位置由 {{provider}} 提供"
         btn:
-          label: "搜索地址"
-        results: "地址"
+          label: "搜索精确位置"
+        results: "精确位置结果"
         no_results: "无结果"
         area_fallback: "可使用当前选择的都道府县与市区町村发布。"
         show_map: "显示地图"

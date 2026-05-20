@@ -13,7 +13,11 @@ import { ajax } from "discourse/lib/ajax";
 import ComboBox from "discourse/select-kit/components/combo-box";
 import { i18n } from "discourse-i18n";
 import { geoLocationSearch, providerDetails } from "../lib/location-utilities";
-import { resolvePrefectureName } from "../lib/jp-location-options";
+import {
+  cityOptionsByPrefecture,
+  resolveCityName,
+  resolvePrefectureName,
+} from "../lib/jp-location-options";
 import GeoLocationResult from "./geo-location-result";
 import LocationSelector from "./location-selector";
 
@@ -43,13 +47,14 @@ export default class LocationForm extends Component {
   @tracked geoLocation = {};
 
   context = null;
+  cityDatalistId = `location-city-options-${Math.random().toString(36).slice(2)}`;
 
   showTitle = equal("appType", "discourse");
 
   constructor() {
     super(...arguments);
     this.context = this.args.context || null;
-    this.formQuery = this.args.rawLocation || "";
+    this.formQuery = this.useRegionSelectors ? "" : this.args.rawLocation || "";
     this.formCountrycode =
       this.args.countrycode ||
       this.siteSettings.location_country_default ||
@@ -155,6 +160,10 @@ export default class LocationForm extends Component {
     );
   }
 
+  get cityOptions() {
+    return cityOptionsByPrefecture(this.formState, this.formCity);
+  }
+
   keyDown(e) {
     if (this.showGeoLocation && e.keyCode === 13) {
       this.send("locationSearch");
@@ -228,6 +237,9 @@ export default class LocationForm extends Component {
   @action
   handleStateChange(value) {
     this.formState = value;
+    if (!this.args.lockRegionFields) {
+      this.formCity = "";
+    }
     if (this.args.onStateChange) {
       this.args.onStateChange(value);
     }
@@ -235,15 +247,15 @@ export default class LocationForm extends Component {
 
   @action
   handleCityChange(value) {
-    this.formCity = value;
+    this.formCity = resolveCityName(this.formState, value);
     if (this.args.onCityChange) {
-      this.args.onCityChange(value);
+      this.args.onCityChange(this.formCity);
     }
   }
 
   @action
   handleCityInput(event) {
-    const value = event?.target?.value || "";
+    const value = resolveCityName(this.formState, event?.target?.value || "");
     this.formCity = value;
     if (this.args.onCityChange) {
       this.args.onCityChange(value);
@@ -255,7 +267,13 @@ export default class LocationForm extends Component {
     let request = {};
 
     if (this.useRegionSelectors) {
-      request.query = String(this.formQuery || "").trim();
+      const queryParts = [
+        String(this.formPostalcode || "").trim(),
+        String(this.formQuery || "").trim(),
+        String(this.formCity || "").trim(),
+        String(this.formState || "").trim(),
+      ].filter(Boolean);
+      request.query = queryParts.join(" ");
       request.countrycode = this.formCountrycode;
       request.context = this.context;
       request.language = "ja";
@@ -282,12 +300,6 @@ export default class LocationForm extends Component {
       )
     ) {
       return;
-    }
-
-    if (this.useRegionSelectors && !request.query) {
-      if (this.formCity || this.formState) {
-        request.query = [this.formCity, this.formState].filter(Boolean).join(" ");
-      }
     }
 
     this.showLocationResults = true;
@@ -350,6 +362,129 @@ export default class LocationForm extends Component {
                 {{i18n "location.address"}}
               </div>
             {{/if}}
+            {{#if this.useRegionSelectors}}
+              {{#if this.showState}}
+                <div class="control-group">
+                  <label class="control-label">{{i18n
+                      "location.state.title"
+                    }}</label>
+                  <div class="controls">
+                    <ComboBox
+                      @valueProperty="code"
+                      @nameProperty="name"
+                      @content={{@stateOptions}}
+                      @value={{this.formState}}
+                      class="input-location prefecture-select"
+                      @onChange={{this.handleStateChange}}
+                      @options={{hash
+                        filterable="true"
+                        disabled=this.stateSelectDisabled
+                        none="location.state.title"
+                      }}
+                    />
+                  </div>
+                  <div class="instructions">{{i18n "location.state.desc"}}</div>
+                </div>
+              {{/if}}
+              {{#if this.showCity}}
+                <div class="control-group">
+                  <label class="control-label">{{i18n
+                      "location.city.title"
+                    }}</label>
+                  <div class="controls">
+                    <Input
+                      @type="text"
+                      @value={{this.formCity}}
+                      list={{this.cityDatalistId}}
+                      class="input-large input-location city-input"
+                      disabled={{this.citySelectDisabled}}
+                      {{on "input" this.handleCityInput}}
+                    />
+                    <datalist id={{this.cityDatalistId}}>
+                      {{#each this.cityOptions as |city|}}
+                        <option value={{city.name}}></option>
+                      {{/each}}
+                    </datalist>
+                  </div>
+                  <div class="instructions">{{i18n "location.city.desc"}}</div>
+                </div>
+              {{/if}}
+              {{#if this.showPostalcode}}
+                <div class="control-group">
+                  <label class="control-label">{{i18n
+                      "location.postalcode.title"
+                    }}</label>
+                  <div class="controls">
+                    <Input
+                      @type="text"
+                      @value={{this.formPostalcode}}
+                      class="input-small input-location"
+                      disabled={{this.postalcodeDisabled}}
+                    />
+                  </div>
+                  <div class="instructions">{{i18n
+                      "location.postalcode.desc"
+                    }}</div>
+                </div>
+              {{/if}}
+              {{#if this.showGeoLocation}}
+                <div class="control-group">
+                  <label class="control-label">{{i18n
+                      "location.query.title"
+                    }}</label>
+                  <div class="controls location-query-controls">
+                    <Input
+                      @type="text"
+                      @value={{this.formQuery}}
+                      class="input-xxlarge input-location"
+                    />
+                    <button
+                      class="btn btn-default wizard-btn location-search"
+                      {{on "click" this.locationSearch}}
+                      disabled={{this.searchDisabled}}
+                      type="button"
+                    >
+                      {{i18n "location.geo.btn.label"}}
+                    </button>
+                  </div>
+                  <div class="instructions">{{i18n "location.query.desc"}}</div>
+                </div>
+                {{#if this.showLocationResults}}
+                  <div class="location-results">
+                    <h4>{{i18n "location.geo.results"}}</h4>
+                    <ul>
+                      {{#if this.hasSearched}}
+                        <ConditionalLoadingSpinner
+                          @condition={{this.loadingLocations}}
+                        >
+                          {{#each this.geoLocationOptions as |l|}}
+                            <GeoLocationResult
+                              @updateGeoLocation={{this.updateGeoLocation}}
+                              @location={{l}}
+                              @geoAttrs={{this.geoAttrs}}
+                            />
+                          {{else}}
+                            <li class="no-results">{{i18n
+                                "location.geo.no_results"
+                              }}</li>
+                            {{#if this.canUseAreaFallback}}
+                              <li class="no-results area-fallback">{{i18n
+                                  "location.geo.area_fallback"
+                                }}</li>
+                            {{/if}}
+                          {{/each}}
+                        </ConditionalLoadingSpinner>
+                      {{/if}}
+                    </ul>
+                  </div>
+                  {{#if this.showProvider}}
+                    <div class="location-form-instructions">{{htmlSafe
+                        (i18n "location.geo.desc" provider=this.providerDetails)
+                      }}</div>
+                  {{/if}}
+                {{/if}}
+              {{/if}}
+            {{else}}
             {{#if this.showStreet}}
               <div class="control-group">
                 <label class="control-label">{{i18n
@@ -493,6 +628,7 @@ export default class LocationForm extends Component {
                 </div>
               </div>
             {{/if}}
+            {{/if}}
           {{else}}
             <div class="control-group">
               <label class="control-label">{{i18n
@@ -524,48 +660,53 @@ export default class LocationForm extends Component {
           {{/if}}
           {{#if this.showGeoLocation}}
             {{#if this.showInputFields}}
-              <button
-                class="btn btn-default wizard-btn location-search"
-                {{on "click" this.locationSearch}}
-                disabled={{this.searchDisabled}}
-                type="button"
-              >
-                {{i18n "location.geo.btn.label"}}
-              </button>
-              {{#if this.showLocationResults}}
-                <div class="location-results">
-                  <h4>{{i18n "location.geo.results"}}</h4>
-                  <ul>
-                    {{#if this.hasSearched}}
-                      <ConditionalLoadingSpinner
-                        @condition={{this.loadingLocations}}
-                      >
-                        {{#each this.geoLocationOptions as |l|}}
-                          <GeoLocationResult
-                            @updateGeoLocation={{this.updateGeoLocation}}
-                            @location={{l}}
-                            @geoAttrs={{this.geoAttrs}}
-                          />
-                        {{else}}
-                          <li class="no-results">{{i18n
-                              "location.geo.no_results"
-                            }}</li>
-                          {{#if this.canUseAreaFallback}}
-                            <li class="no-results area-fallback">{{i18n
-                                "location.geo.area_fallback"
+              {{#unless this.useRegionSelectors}}
+                <button
+                  class="btn btn-default wizard-btn location-search"
+                  {{on "click" this.locationSearch}}
+                  disabled={{this.searchDisabled}}
+                  type="button"
+                >
+                  {{i18n "location.geo.btn.label"}}
+                </button>
+                {{#if this.showLocationResults}}
+                  <div class="location-results">
+                    <h4>{{i18n "location.geo.results"}}</h4>
+                    <ul>
+                      {{#if this.hasSearched}}
+                        <ConditionalLoadingSpinner
+                          @condition={{this.loadingLocations}}
+                        >
+                          {{#each this.geoLocationOptions as |l|}}
+                            <GeoLocationResult
+                              @updateGeoLocation={{this.updateGeoLocation}}
+                              @location={{l}}
+                              @geoAttrs={{this.geoAttrs}}
+                            />
+                          {{else}}
+                            <li class="no-results">{{i18n
+                                "location.geo.no_results"
                               }}</li>
-                          {{/if}}
-                        {{/each}}
-                      </ConditionalLoadingSpinner>
-                    {{/if}}
-                  </ul>
-                </div>
-                {{#if this.showProvider}}
-                  <div class="location-form-instructions">{{htmlSafe
-                      (i18n "location.geo.desc" provider=this.providerDetails)
-                    }}</div>
+                            {{#if this.canUseAreaFallback}}
+                              <li class="no-results area-fallback">{{i18n
+                                  "location.geo.area_fallback"
+                                }}</li>
+                            {{/if}}
+                          {{/each}}
+                        </ConditionalLoadingSpinner>
+                      {{/if}}
+                    </ul>
+                  </div>
+                  {{#if this.showProvider}}
+                    <div class="location-form-instructions">{{htmlSafe
+                        (i18n
+                          "location.geo.desc"
+                          provider=this.providerDetails
+                        )
+                      }}</div>
+                  {{/if}}
                 {{/if}}
-              {{/if}}
+              {{/unless}}
             {{/if}}
           {{/if}}
         </div>

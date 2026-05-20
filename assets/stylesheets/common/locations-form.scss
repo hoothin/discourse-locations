@@ -67,6 +67,18 @@
     margin: 15px 0;
   }
 
+  .location-query-controls {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+
+    .location-search {
+      display: inline-flex;
+      margin: 0;
+      white-space: nowrap;
+    }
+  }
+
   .geo-map {
     height: 400px;
   }

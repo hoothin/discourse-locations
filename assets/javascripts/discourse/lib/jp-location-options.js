@@ -59,10 +59,41 @@ const CITY_BY_PREFECTURE = {
   "茨城県": ["水戸市"],
   "栃木県": ["宇都宮市"],
   "群馬県": ["前橋市"],
-  "埼玉県": ["さいたま市"],
-  "千葉県": ["千葉市"],
-  "東京都": ["千代田区", "新宿区", "渋谷区", "世田谷区", "港区"],
-  "神奈川県": ["横浜市", "川崎市", "相模原市"],
+  "埼玉県": ["さいたま市", "川口市", "川越市", "所沢市", "越谷市"],
+  "千葉県": ["千葉市", "船橋市", "市川市", "松戸市", "柏市"],
+  "東京都": [
+    "千代田区",
+    "中央区",
+    "港区",
+    "新宿区",
+    "文京区",
+    "台東区",
+    "墨田区",
+    "江東区",
+    "品川区",
+    "目黒区",
+    "大田区",
+    "世田谷区",
+    "渋谷区",
+    "中野区",
+    "杉並区",
+    "豊島区",
+    "北区",
+    "荒川区",
+    "板橋区",
+    "練馬区",
+    "足立区",
+    "葛飾区",
+    "江戸川区",
+    "八王子市",
+    "立川市",
+    "武蔵野市",
+    "三鷹市",
+    "府中市",
+    "町田市",
+    "調布市"
+  ],
+  "神奈川県": ["横浜市", "川崎市", "相模原市", "藤沢市", "鎌倉市", "横須賀市"],
   "新潟県": ["新潟市"],
   "富山県": ["富山市"],
   "石川県": ["金沢市"],
@@ -74,9 +105,9 @@ const CITY_BY_PREFECTURE = {
   "愛知県": ["名古屋市"],
   "三重県": ["津市"],
   "滋賀県": ["大津市"],
-  "京都府": ["京都市"],
-  "大阪府": ["大阪市", "堺市"],
-  "兵庫県": ["神戸市", "姫路市"],
+  "京都府": ["京都市", "宇治市", "亀岡市"],
+  "大阪府": ["大阪市", "堺市", "豊中市", "吹田市", "高槻市", "東大阪市"],
+  "兵庫県": ["神戸市", "姫路市", "尼崎市", "西宮市", "明石市"],
   "奈良県": ["奈良市"],
   "和歌山県": ["和歌山市"],
   "鳥取県": ["鳥取市"],
@@ -88,7 +119,7 @@ const CITY_BY_PREFECTURE = {
   "香川県": ["高松市"],
   "愛媛県": ["松山市"],
   "高知県": ["高知市"],
-  "福岡県": ["福岡市", "北九州市", "久留米市"],
+  "福岡県": ["福岡市", "北九州市", "久留米市", "春日市", "大野城市"],
   "佐賀県": ["佐賀市"],
   "長崎県": ["長崎市", "佐世保市"],
   "熊本県": ["熊本市"],
@@ -110,7 +141,9 @@ const CHAR_FOLD = {
   贺: "賀",
   爱: "愛",
   叶: "葉",
-  户: "戸"
+  户: "戸",
+  涩: "渋",
+  澀: "渋"
 };
 
 function foldText(raw) {
@@ -127,6 +160,10 @@ function stripSuffix(raw) {
 
 function normalizeToken(raw) {
   return stripSuffix(foldText(raw));
+}
+
+function normalizeCityToken(raw) {
+  return foldText(raw).replace(/[市区區町村郡]/g, "");
 }
 
 const PREFECTURE_CANONICAL = new Map();
@@ -152,4 +189,18 @@ export function cityOptionsByPrefecture(prefecture, currentCity = "") {
     base.push(city);
   }
   return base.map((name) => ({ code: name, name }));
+}
+
+export function resolveCityName(prefecture, raw) {
+  const city = String(raw || "").trim();
+  if (!city) return "";
+
+  const token = normalizeCityToken(city);
+  const hasMunicipalitySuffix = /[市区區町村]\s*$/.test(city);
+  if (!hasMunicipalitySuffix && token.length < 2) {
+    return city;
+  }
+
+  const options = cityOptionsByPrefecture(prefecture).map((option) => option.name);
+  return options.find((option) => normalizeCityToken(option) === token) || city;
 }

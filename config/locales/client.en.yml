@@ -19,17 +19,17 @@ en:
         title: "Number and Street"
         desc: "e.g. 42 Wallaby Way"
       postalcode:
-        title: "Postal Code (Zip)"
-        desc: "e.g. 2548"
+        title: "Postal Code (optional)"
+        desc: "Used only to search for an exact location, e.g. 160-0023"
       neighbourhood:
         title: "Neighbourhood"
         desc: "e.g. Cremorne Point"
       city:
         title: "City, Town or Village"
-        desc: "e.g. Sydney"
+        desc: "Choose a suggestion or type the municipality, e.g. Shinjuku City"
       state:
         title: "State or Province"
-        desc: "e.g. New South Wales"
+        desc: "Choose the prefecture first. This is used for region filters."
       country_code:
         title: "Country"
         placeholder: "Select a Country"
@@ -41,13 +41,13 @@ en:
         title: "Longitude"
         desc: "e.g. 115.8626477"
       query:
-        title: "Address"
-        desc: "e.g. 42 Wallaby Way, Sydney."
+        title: "Detailed address (optional)"
+        desc: "Enter a station, area, or street only when searching for an exact location."
       geo:
         desc: "Locations provided by {{provider}}"
         btn:
-          label: "Find Address"
-        results: "Addresses"
+          label: "Search exact location"
+        results: "Exact location results"
         no_results: "No results."
         area_fallback: "You can publish with the selected prefecture and city."
         show_map: "Show Map"
