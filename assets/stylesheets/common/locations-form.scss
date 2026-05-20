@@ -88,23 +88,21 @@
 
   .location-region-grid,
   .location-exact-grid {
-    display: block;
     margin-top: 10px;
     max-width: 760px;
 
     .location-field-row {
-      display: grid;
-      grid-template-columns: 150px minmax(260px, 1fr);
-      column-gap: 14px;
-      align-items: center;
+      display: block !important;
       margin: 0 0 14px;
       width: 100%;
     }
 
     .control-label {
-      justify-self: end;
+      display: block;
+      justify-self: start;
       margin: 0;
-      text-align: right;
+      text-align: left !important;
+      width: 100%;
     }
 
     .controls {
@@ -113,7 +111,6 @@
     }
 
     .instructions {
-      grid-column: 2;
       margin-top: 4px;
     }
 
@@ -141,21 +138,49 @@
     }
   }
 
+  .location-region-grid,
   .location-exact-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.85fr) minmax(360px, 1.15fr);
+    column-gap: 18px;
+    align-items: start;
+
+    .location-field-row {
+      margin-bottom: 0;
+    }
+  }
+
+  .location-exact-grid {
+    grid-template-columns: minmax(180px, 0.8fr) minmax(320px, 1.4fr) max-content;
     margin-top: 22px;
+
+    .location-field-row {
+      margin-bottom: 0;
+    }
+
+    .location-search-group {
+      align-self: start;
+
+      .controls {
+        display: flex;
+        align-items: center;
+        min-height: 34px;
+      }
+    }
+
+    .location-search {
+      margin: 0;
+      white-space: nowrap;
+    }
   }
 
   @media screen and (max-width: 700px) {
     .location-region-grid,
     .location-exact-grid {
-      .location-field-row {
-        display: block;
-      }
+      display: block;
 
       .control-label {
-        display: block;
         margin-bottom: 4px;
-        text-align: left;
       }
 
       .instructions {

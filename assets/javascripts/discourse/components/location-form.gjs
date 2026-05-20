@@ -437,12 +437,18 @@ export default class LocationForm extends Component {
                     <label class="control-label">{{i18n
                         "location.query.title"
                       }}</label>
-                    <div class="controls location-query-controls">
+                    <div class="controls">
                       <Input
                         @type="text"
                         @value={{this.formQuery}}
                         class="input-xxlarge input-location"
                       />
+                    </div>
+                    <div class="instructions">{{i18n "location.query.desc"}}</div>
+                  </div>
+                  <div class="location-field-row location-search-group">
+                    <label class="control-label">&nbsp;</label>
+                    <div class="controls">
                       <button
                         class="btn btn-default wizard-btn location-search"
                         {{on "click" this.locationSearch}}
@@ -452,7 +458,6 @@ export default class LocationForm extends Component {
                         {{i18n "location.geo.btn.label"}}
                       </button>
                     </div>
-                    <div class="instructions">{{i18n "location.query.desc"}}</div>
                   </div>
                 {{/if}}
               </div>
