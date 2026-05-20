@@ -70,7 +70,7 @@
 
   .location-query-controls {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     gap: 8px;
 
     input.input-location {
@@ -88,39 +88,63 @@
 
   .location-region-grid,
   .location-exact-grid {
-    display: grid;
-    align-items: start;
-    gap: 16px;
+    display: block;
     margin-top: 10px;
     max-width: 760px;
 
     .control-group {
-      display: block;
+      display: grid;
+      grid-template-columns: 150px minmax(260px, 1fr);
+      column-gap: 14px;
+      align-items: center;
+      margin: 0 0 14px;
+      width: 100%;
+    }
+
+    .control-label {
+      justify-self: end;
       margin: 0;
+      text-align: right;
+    }
+
+    .controls {
       min-width: 0;
       width: 100%;
+    }
+
+    .instructions {
+      grid-column: 2;
+      margin-top: 4px;
     }
 
     input.input-location,
     div.input-location {
       box-sizing: border-box;
       width: 100%;
+      min-height: 34px;
     }
   }
 
-  .location-region-grid {
-    grid-template-columns: minmax(160px, 1fr) minmax(260px, 2fr);
-  }
-
   .location-exact-grid {
-    grid-template-columns: minmax(140px, 180px) minmax(360px, 1fr);
     margin-top: 22px;
   }
 
   @media screen and (max-width: 700px) {
     .location-region-grid,
     .location-exact-grid {
-      grid-template-columns: 1fr;
+      .control-group {
+        display: block;
+      }
+
+      .control-label {
+        display: block;
+        margin-bottom: 4px;
+        text-align: left;
+      }
+
+      .instructions {
+        margin-top: 4px;
+      }
     }
 
     .location-query-controls {
