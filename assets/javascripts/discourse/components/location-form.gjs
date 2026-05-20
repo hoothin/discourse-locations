@@ -363,92 +363,100 @@ export default class LocationForm extends Component {
               </div>
             {{/if}}
             {{#if this.useRegionSelectors}}
-              {{#if this.showState}}
-                <div class="control-group">
-                  <label class="control-label">{{i18n
-                      "location.state.title"
-                    }}</label>
-                  <div class="controls">
-                    <ComboBox
-                      @valueProperty="code"
-                      @nameProperty="name"
-                      @content={{@stateOptions}}
-                      @value={{this.formState}}
-                      class="input-location prefecture-select"
-                      @onChange={{this.handleStateChange}}
-                      @options={{hash
-                        filterable="true"
-                        disabled=this.stateSelectDisabled
-                        none="location.state.title"
-                      }}
-                    />
+              <div class="location-region-grid">
+                {{#if this.showState}}
+                  <div class="control-group location-state-group">
+                    <label class="control-label">{{i18n
+                        "location.state.title"
+                      }}</label>
+                    <div class="controls">
+                      <ComboBox
+                        @valueProperty="code"
+                        @nameProperty="name"
+                        @content={{@stateOptions}}
+                        @value={{this.formState}}
+                        class="input-location prefecture-select"
+                        @onChange={{this.handleStateChange}}
+                        @options={{hash
+                          filterable="true"
+                          disabled=this.stateSelectDisabled
+                          none="location.state.title"
+                        }}
+                      />
+                    </div>
+                    <div class="instructions">{{i18n
+                        "location.state.desc"
+                      }}</div>
                   </div>
-                  <div class="instructions">{{i18n "location.state.desc"}}</div>
-                </div>
-              {{/if}}
-              {{#if this.showCity}}
-                <div class="control-group">
-                  <label class="control-label">{{i18n
-                      "location.city.title"
-                    }}</label>
-                  <div class="controls">
-                    <Input
-                      @type="text"
-                      @value={{this.formCity}}
-                      list={{this.cityDatalistId}}
-                      class="input-large input-location city-input"
-                      disabled={{this.citySelectDisabled}}
-                      {{on "input" this.handleCityInput}}
-                    />
-                    <datalist id={{this.cityDatalistId}}>
-                      {{#each this.cityOptions as |city|}}
-                        <option value={{city.name}}></option>
-                      {{/each}}
-                    </datalist>
+                {{/if}}
+                {{#if this.showCity}}
+                  <div class="control-group location-city-group">
+                    <label class="control-label">{{i18n
+                        "location.city.title"
+                      }}</label>
+                    <div class="controls">
+                      <Input
+                        @type="text"
+                        @value={{this.formCity}}
+                        list={{this.cityDatalistId}}
+                        class="input-large input-location city-input"
+                        disabled={{this.citySelectDisabled}}
+                        {{on "input" this.handleCityInput}}
+                      />
+                      <datalist id={{this.cityDatalistId}}>
+                        {{#each this.cityOptions as |city|}}
+                          <option value={{city.name}}></option>
+                        {{/each}}
+                      </datalist>
+                    </div>
+                    <div class="instructions">{{i18n "location.city.desc"}}</div>
                   </div>
-                  <div class="instructions">{{i18n "location.city.desc"}}</div>
-                </div>
-              {{/if}}
-              {{#if this.showPostalcode}}
-                <div class="control-group">
-                  <label class="control-label">{{i18n
-                      "location.postalcode.title"
-                    }}</label>
-                  <div class="controls">
-                    <Input
-                      @type="text"
-                      @value={{this.formPostalcode}}
-                      class="input-small input-location"
-                      disabled={{this.postalcodeDisabled}}
-                    />
+                {{/if}}
+              </div>
+              <div class="location-exact-grid">
+                {{#if this.showPostalcode}}
+                  <div class="control-group location-postal-group">
+                    <label class="control-label">{{i18n
+                        "location.postalcode.title"
+                      }}</label>
+                    <div class="controls">
+                      <Input
+                        @type="text"
+                        @value={{this.formPostalcode}}
+                        class="input-small input-location"
+                        disabled={{this.postalcodeDisabled}}
+                      />
+                    </div>
+                    <div class="instructions">{{i18n
+                        "location.postalcode.desc"
+                      }}</div>
                   </div>
-                  <div class="instructions">{{i18n
-                      "location.postalcode.desc"
-                    }}</div>
-                </div>
-              {{/if}}
+                {{/if}}
+                {{#if this.showGeoLocation}}
+                  <div class="control-group location-query-group">
+                    <label class="control-label">{{i18n
+                        "location.query.title"
+                      }}</label>
+                    <div class="controls location-query-controls">
+                      <Input
+                        @type="text"
+                        @value={{this.formQuery}}
+                        class="input-xxlarge input-location"
+                      />
+                      <button
+                        class="btn btn-default wizard-btn location-search"
+                        {{on "click" this.locationSearch}}
+                        disabled={{this.searchDisabled}}
+                        type="button"
+                      >
+                        {{i18n "location.geo.btn.label"}}
+                      </button>
+                    </div>
+                    <div class="instructions">{{i18n "location.query.desc"}}</div>
+                  </div>
+                {{/if}}
+              </div>
               {{#if this.showGeoLocation}}
-                <div class="control-group">
-                  <label class="control-label">{{i18n
-                      "location.query.title"
-                    }}</label>
-                  <div class="controls location-query-controls">
-                    <Input
-                      @type="text"
-                      @value={{this.formQuery}}
-                      class="input-xxlarge input-location"
-                    />
-                    <button
-                      class="btn btn-default wizard-btn location-search"
-                      {{on "click" this.locationSearch}}
-                      disabled={{this.searchDisabled}}
-                      type="button"
-                    >
-                      {{i18n "location.geo.btn.label"}}
-                    </button>
-                  </div>
-                  <div class="instructions">{{i18n "location.query.desc"}}</div>
-                </div>
                 {{#if this.showLocationResults}}
                   <div class="location-results">
                     <h4>{{i18n "location.geo.results"}}</h4>
@@ -480,7 +488,7 @@ export default class LocationForm extends Component {
                   {{#if this.showProvider}}
                     <div class="location-form-instructions">{{htmlSafe
                         (i18n "location.geo.desc" provider=this.providerDetails)
-                      }}</div>
+                    }}</div>
                   {{/if}}
                 {{/if}}
               {{/if}}

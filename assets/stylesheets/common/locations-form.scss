@@ -19,6 +19,7 @@
 
   .address {
     padding-right: 20px;
+    width: 100%;
   }
 
   .coordinates {
@@ -72,10 +73,62 @@
     align-items: stretch;
     gap: 8px;
 
+    input.input-location {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: 100%;
+    }
+
     .location-search {
       display: inline-flex;
       margin: 0;
       white-space: nowrap;
+    }
+  }
+
+  .location-region-grid,
+  .location-exact-grid {
+    display: grid;
+    align-items: start;
+    gap: 16px;
+    margin-top: 10px;
+    max-width: 760px;
+
+    .control-group {
+      display: block;
+      margin: 0;
+      min-width: 0;
+      width: 100%;
+    }
+
+    input.input-location,
+    div.input-location {
+      box-sizing: border-box;
+      width: 100%;
+    }
+  }
+
+  .location-region-grid {
+    grid-template-columns: minmax(160px, 1fr) minmax(260px, 2fr);
+  }
+
+  .location-exact-grid {
+    grid-template-columns: minmax(140px, 180px) minmax(360px, 1fr);
+    margin-top: 22px;
+  }
+
+  @media screen and (max-width: 700px) {
+    .location-region-grid,
+    .location-exact-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .location-query-controls {
+      flex-direction: column;
+
+      .location-search {
+        justify-content: center;
+      }
     }
   }
 
