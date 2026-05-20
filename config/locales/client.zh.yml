@@ -48,6 +48,7 @@ zh-CN:
           label: "查找地址"
         results: "地址結果"
         no_results: "無結果。"
+        area_fallback: "可使用目前選擇的都道府縣與市區町村發布。"
         show_map: "顯示地圖"
         hide_map: "隱藏地圖"
       label:

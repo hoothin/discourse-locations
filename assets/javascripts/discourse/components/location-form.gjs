@@ -147,6 +147,14 @@ export default class LocationForm extends Component {
     ];
   }
 
+  get canUseAreaFallback() {
+    return Boolean(
+      this.useRegionSelectors &&
+        String(this.formState || "").trim() &&
+        String(this.formCity || "").trim()
+    );
+  }
+
   keyDown(e) {
     if (this.showGeoLocation && e.keyCode === 13) {
       this.send("locationSearch");
@@ -326,6 +334,8 @@ export default class LocationForm extends Component {
         this.loadingLocations = false;
       })
       .catch((error) => {
+        this.geoLocationOptions = [];
+        this.loadingLocations = false;
         this.args.searchError(error);
       });
   }
@@ -540,6 +550,11 @@ export default class LocationForm extends Component {
                           <li class="no-results">{{i18n
                               "location.geo.no_results"
                             }}</li>
+                          {{#if this.canUseAreaFallback}}
+                            <li class="no-results area-fallback">{{i18n
+                                "location.geo.area_fallback"
+                              }}</li>
+                          {{/if}}
                         {{/each}}
                       </ConditionalLoadingSpinner>
                     {{/if}}

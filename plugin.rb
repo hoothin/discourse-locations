@@ -65,6 +65,15 @@ after_initialize do
     nil
   end
 
+  def Locations.location_has_coordinates?(location)
+    return false if !location.is_a?(Hash)
+
+    geo_location = location["geo_location"] || location[:geo_location]
+    return false if !geo_location.is_a?(Hash)
+
+    geo_location["lat"].present? && geo_location["lon"].present?
+  end
+
   def Locations.ip_auto_lookup_mode
     SiteSetting.location_ip_auto_lookup_mode
   end
@@ -234,7 +243,7 @@ after_initialize do
          location = Locations::Helper.parse_location(location.to_unsafe_hash)
       tc.record_change("location", tc.topic.custom_fields["location"], location)
       tc.topic.custom_fields["location"] = location
-      tc.topic.custom_fields["has_geo_location"] = location["geo_location"].present?
+      tc.topic.custom_fields["has_geo_location"] = Locations.location_has_coordinates?(location)
 
       Locations::TopicLocationProcess.upsert(tc.topic)
     elsif location.blank?
@@ -250,7 +259,7 @@ after_initialize do
          location = Locations::Helper.parse_location(opts[:location])
       topic = post.topic
       topic.custom_fields["location"] = location
-      topic.custom_fields["has_geo_location"] = location["geo_location"].present?
+      topic.custom_fields["has_geo_location"] = Locations.location_has_coordinates?(location)
       topic.save!
       Locations::TopicLocationProcess.upsert(topic)
     end
@@ -396,7 +405,7 @@ on(:custom_wizard_ready) do
 
           location_params = {}
           location_params["location"] = location
-          location_params["has_geo_location"] = location["geo_location"].present?
+          location_params["has_geo_location"] = Locations.location_has_coordinates?(location)
 
           params[:topic_opts] ||= {}
           params[:topic_opts][:custom_fields] ||= {}

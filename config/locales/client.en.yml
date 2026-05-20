@@ -49,6 +49,7 @@ en:
           label: "Find Address"
         results: "Addresses"
         no_results: "No results."
+        area_fallback: "You can publish with the selected prefecture and city."
         show_map: "Show Map"
         hide_map: "Hide Map"
       label:

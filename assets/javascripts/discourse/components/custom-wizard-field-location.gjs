@@ -39,13 +39,14 @@ export default class CustomWizardFieldLocationComponent extends Component {
     });
 
     this.geoLocation = existing["geo_location"] || {};
+    this.rawLocation = existing["address"] || existing["raw_location"] || null;
     this.countrycode =
       this.countrycode || this.siteSettings.location_country_default || "jp";
     this.args.field.customCheck = this.customCheck.bind(this);
   }
 
   customCheck() {
-    const required = this.required;
+    const required = this.args.field.required;
     const hasInput = this.inputFields.some((f) => this[f]);
 
     if (required || hasInput) {
@@ -57,7 +58,11 @@ export default class CustomWizardFieldLocationComponent extends Component {
 
   @computed
   get inputFields() {
-    return this.siteSettings.location_input_fields.split("|");
+    const fields = this.siteSettings.location_input_fields
+      .split("|")
+      .filter(Boolean);
+
+    return Array.from(new Set([...fields, "state", "city"]));
   }
 
   @computed("state")
@@ -82,8 +87,46 @@ export default class CustomWizardFieldLocationComponent extends Component {
     }
   }
 
+  hasGeoCoordinates() {
+    return Boolean(
+      this.compactText(this.geoLocation?.lat) &&
+        this.compactText(this.geoLocation?.lon)
+    );
+  }
+
+  compactText(value) {
+    return String(value || "").trim();
+  }
+
+  buildAreaAddress() {
+    return [this.state, this.city]
+      .map((value) => this.compactText(value))
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  buildLocationValue(extraAttrs = {}) {
+    const location = {};
+
+    this.inputFields.forEach((field) => {
+      const value = this.compactText(this[field]);
+      if (value) {
+        location[field] = value;
+      }
+    });
+
+    location.countrycode = this.compactText(this.countrycode || "jp") || "jp";
+    location.address = this.compactText(this.rawLocation) || this.buildAreaAddress();
+    location.precision = this.hasGeoCoordinates() ? "exact" : "area";
+
+    if (this.hasGeoCoordinates()) {
+      location.geo_location = this.geoLocation;
+    }
+
+    return { ...location, ...extraAttrs };
+  }
+
   handleValidation() {
-    let location = {};
     this.inferStateFromRawLocation();
 
     if (
@@ -97,41 +140,25 @@ export default class CustomWizardFieldLocationComponent extends Component {
       );
     }
 
-    if (this.inputFieldsEnabled) {
-      let validationType = null;
+    if (this.inputFieldsEnabled && !this.compactText(this.state)) {
+      return this.setValidation(false, "state");
+    }
 
-      this.inputFields.some((field) => {
-        const input = this[`${field}`];
-        if (!input || input.length < 2) {
-          validationType = field;
-          return true;
-        } else if (input && input.length >= 2) {
-          location[field] = input;
-        }
-      });
-
-      if (validationType) {
-        return this.setValidation(false, validationType);
-      }
+    if (this.inputFieldsEnabled && !this.compactText(this.city)) {
+      return this.setValidation(false, "city");
     }
 
     if (this.includeGeoLocation) {
-      let valid =
-        this.geoLocation && this.geoLocation.lat && this.geoLocation.lon;
-      let message;
-
-      if (valid) {
-        location["geo_location"] = this.geoLocation;
-        this.args.field.value = location;
-      } else {
-        message = "geo_location";
+      const hasPartialGeoLocation =
+        Boolean(this.compactText(this.geoLocation?.lat)) !==
+        Boolean(this.compactText(this.geoLocation?.lon));
+      if (hasPartialGeoLocation) {
+        return this.setValidation(false, "coordinates");
       }
-
-      return this.setValidation(valid, message);
-    } else {
-      this.args.field.value = location;
-      return this.setValidation(true);
     }
+
+    this.args.field.value = this.buildLocationValue();
+    return this.setValidation(true);
   }
 
   setValidation(valid, type) {
@@ -155,11 +182,11 @@ export default class CustomWizardFieldLocationComponent extends Component {
     );
     const nextCity = String(gl.city || gl.district || "").trim();
     const nextState = String(resolvedState || "").trim();
-    this.city = nextCity;
-    this.state = nextState;
+    this.city = nextCity || this.city;
+    this.state = nextState || this.state;
     this.geoLocation = { lat: gl.lat, lon: gl.lon };
-    this.countrycode = gl.countrycode;
-    this.rawLocation = gl.address;
+    this.countrycode = gl.countrycode || this.countrycode || "jp";
+    this.rawLocation = gl.address || this.buildAreaAddress();
     this.lockRegionFields = Boolean(nextState && nextCity);
   }
 

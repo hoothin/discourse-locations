@@ -47,6 +47,7 @@ zh_CN:
           label: "搜索地址"
         results: "地址"
         no_results: "无结果"
+        area_fallback: "可使用当前选择的都道府县与市区町村发布。"
         show_map: "显示地图"
       label:
         add: "添加位置"
