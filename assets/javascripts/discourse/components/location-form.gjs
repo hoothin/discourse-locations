@@ -365,7 +365,7 @@ export default class LocationForm extends Component {
             {{#if this.useRegionSelectors}}
               <div class="location-region-grid">
                 {{#if this.showState}}
-                  <div class="control-group location-state-group">
+                  <div class="location-field-row location-state-group">
                     <label class="control-label">{{i18n
                         "location.state.title"
                       }}</label>
@@ -390,7 +390,7 @@ export default class LocationForm extends Component {
                   </div>
                 {{/if}}
                 {{#if this.showCity}}
-                  <div class="control-group location-city-group">
+                  <div class="location-field-row location-city-group">
                     <label class="control-label">{{i18n
                         "location.city.title"
                       }}</label>
@@ -415,7 +415,7 @@ export default class LocationForm extends Component {
               </div>
               <div class="location-exact-grid">
                 {{#if this.showPostalcode}}
-                  <div class="control-group location-postal-group">
+                  <div class="location-field-row location-postal-group">
                     <label class="control-label">{{i18n
                         "location.postalcode.title"
                       }}</label>
@@ -433,7 +433,7 @@ export default class LocationForm extends Component {
                   </div>
                 {{/if}}
                 {{#if this.showGeoLocation}}
-                  <div class="control-group location-query-group">
+                  <div class="location-field-row location-query-group">
                     <label class="control-label">{{i18n
                         "location.query.title"
                       }}</label>

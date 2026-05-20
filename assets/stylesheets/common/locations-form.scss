@@ -92,7 +92,7 @@
     margin-top: 10px;
     max-width: 760px;
 
-    .control-group {
+    .location-field-row {
       display: grid;
       grid-template-columns: 150px minmax(260px, 1fr);
       column-gap: 14px;
@@ -120,8 +120,24 @@
     input.input-location,
     div.input-location {
       box-sizing: border-box;
+      max-width: none;
+      min-width: 0;
       width: 100%;
       min-height: 34px;
+    }
+
+    .select-kit.input-location,
+    .combo-box.input-location,
+    .prefecture-select {
+      max-width: none;
+      min-width: 0;
+      width: 100% !important;
+    }
+
+    .select-kit.input-location .select-kit-header,
+    .combo-box.input-location .select-kit-header {
+      box-sizing: border-box;
+      width: 100%;
     }
   }
 
@@ -132,7 +148,7 @@
   @media screen and (max-width: 700px) {
     .location-region-grid,
     .location-exact-grid {
-      .control-group {
+      .location-field-row {
         display: block;
       }
 
