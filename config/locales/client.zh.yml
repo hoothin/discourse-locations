@@ -46,6 +46,15 @@ zh-CN:
         desc: "位置資料由 {{provider}} 提供"
         btn:
           label: "搜尋精確位置"
+        current:
+          label: "取得目前位置"
+          loading: "正在取得位置..."
+          locked: "GPS 座標已鎖定，仍可修改都道府縣與市區町村。"
+          unsupported: "此瀏覽器不支援取得目前位置。"
+          denied: "位置權限已被拒絕。"
+          unavailable: "目前位置不可用，請再試一次。"
+          timeout: "取得目前位置逾時，請再試一次。"
+          error: "無法取得目前位置，請再試一次。"
         results: "精確位置結果"
         no_results: "無結果。"
         area_fallback: "可使用目前選擇的都道府縣與市區町村發布。"
@@ -56,6 +65,8 @@ zh-CN:
         title: "顯示位置詳情"
       validation:
         state: "請輸入省／都道府縣。"
+        city: "請輸入城市／區町村。"
+        coordinates: "請同時提供緯度與經度。"
       clear: "清除"
       done: "完成"
       errors:

@@ -10,6 +10,8 @@ import {
 } from "../lib/jp-location-options";
 import LocationForm from "./location-form";
 
+const BROWSER_GEOLOCATION_SOURCE = "browser_geolocation";
+
 export default class CustomWizardFieldLocationComponent extends Component {
   @service siteSettings;
 
@@ -22,6 +24,9 @@ export default class CustomWizardFieldLocationComponent extends Component {
   @tracked geoLocation = { lat: "", lon: "" };
   @tracked rawLocation = null;
   @tracked lockRegionFields = false;
+  @tracked gpsLocked = false;
+  @tracked gpsAccuracy = null;
+  @tracked gpsCapturedAt = null;
   context = this.args.wizard.id;
   includeGeoLocation = true;
   inputFieldsEnabled = true;
@@ -42,6 +47,9 @@ export default class CustomWizardFieldLocationComponent extends Component {
     this.rawLocation = existing["address"] || existing["raw_location"] || null;
     this.countrycode =
       this.countrycode || this.siteSettings.location_country_default || "jp";
+    this.gpsLocked = this.isBrowserGeolocation(existing);
+    this.gpsAccuracy = existing["accuracy"] || null;
+    this.gpsCapturedAt = existing["captured_at"] || null;
     this.args.field.customCheck = this.customCheck.bind(this);
   }
 
@@ -95,7 +103,24 @@ export default class CustomWizardFieldLocationComponent extends Component {
   }
 
   compactText(value) {
-    return String(value || "").trim();
+    return value === null || value === undefined ? "" : String(value).trim();
+  }
+
+  isBrowserGeolocation(location) {
+    return Boolean(
+      location &&
+        (location.source === BROWSER_GEOLOCATION_SOURCE ||
+          location.precision === "gps" ||
+          location.gps_locked === true ||
+          location.gps_locked === "true")
+    );
+  }
+
+  buildGeoLocationValue() {
+    return {
+      lat: this.compactText(this.geoLocation?.lat),
+      lon: this.compactText(this.geoLocation?.lon),
+    };
   }
 
   buildAreaAddress() {
@@ -116,18 +141,49 @@ export default class CustomWizardFieldLocationComponent extends Component {
     });
 
     location.countrycode = this.compactText(this.countrycode || "jp") || "jp";
-    location.address = this.compactText(this.rawLocation) || this.buildAreaAddress();
+    location.address =
+      this.compactText(this.rawLocation) || this.buildAreaAddress();
     location.precision = this.hasGeoCoordinates() ? "exact" : "area";
 
     if (this.hasGeoCoordinates()) {
-      location.geo_location = this.geoLocation;
+      location.geo_location = this.buildGeoLocationValue();
+    }
+
+    if (this.gpsLocked) {
+      location.precision = "exact";
+      location.source = BROWSER_GEOLOCATION_SOURCE;
+      location.gps_locked = true;
+
+      if (
+        this.gpsAccuracy !== null &&
+        this.gpsAccuracy !== undefined &&
+        this.compactText(this.gpsAccuracy)
+      ) {
+        const accuracy = Number(this.gpsAccuracy);
+        if (Number.isFinite(accuracy)) {
+          location.accuracy = accuracy;
+        }
+      }
+
+      const capturedAt = this.compactText(this.gpsCapturedAt);
+      if (capturedAt) {
+        location.captured_at = capturedAt;
+      }
     }
 
     return { ...location, ...extraAttrs };
   }
 
+  syncFieldValue() {
+    this.args.field.value = this.buildLocationValue();
+  }
+
   handleValidation() {
     this.inferStateFromRawLocation();
+
+    if (this.gpsLocked && !this.hasGeoCoordinates()) {
+      return this.setValidation(false, "coordinates");
+    }
 
     if (
       this.inputFieldsEnabled &&
@@ -169,6 +225,11 @@ export default class CustomWizardFieldLocationComponent extends Component {
 
   @action
   setGeoLocation(gl) {
+    const browserGeolocation = gl.source === BROWSER_GEOLOCATION_SOURCE;
+    if (this.gpsLocked && !browserGeolocation) {
+      return;
+    }
+
     this.name = gl.name;
     this.street = gl.street;
     this.neighbourhood = gl.neighbourhood;
@@ -184,10 +245,18 @@ export default class CustomWizardFieldLocationComponent extends Component {
     const nextState = String(resolvedState || "").trim();
     this.city = nextCity || this.city;
     this.state = nextState || this.state;
-    this.geoLocation = { lat: gl.lat, lon: gl.lon };
+    this.geoLocation = {
+      lat: this.compactText(gl.lat),
+      lon: this.compactText(gl.lon),
+    };
     this.countrycode = gl.countrycode || this.countrycode || "jp";
-    this.rawLocation = gl.address || this.buildAreaAddress();
-    this.lockRegionFields = Boolean(nextState && nextCity);
+    this.rawLocation = gl.address || this.rawLocation || this.buildAreaAddress();
+    this.lockRegionFields =
+      !browserGeolocation && Boolean(nextState && nextCity);
+    this.gpsLocked = browserGeolocation || this.isBrowserGeolocation(gl);
+    this.gpsAccuracy = this.gpsLocked ? gl.accuracy : null;
+    this.gpsCapturedAt = this.gpsLocked ? gl.captured_at : null;
+    this.syncFieldValue();
   }
 
   @action
@@ -196,11 +265,13 @@ export default class CustomWizardFieldLocationComponent extends Component {
     if (!this.lockRegionFields) {
       this.city = "";
     }
+    this.syncFieldValue();
   }
 
   @action
   onCityChange(value) {
     this.city = value;
+    this.syncFieldValue();
   }
 
   @action
@@ -223,6 +294,8 @@ export default class CustomWizardFieldLocationComponent extends Component {
       @useRegionSelectors={{true}}
       @stateOptions={{this.stateOptions}}
       @lockRegionFields={{this.lockRegionFields}}
+      @coordinatesLocked={{this.gpsLocked}}
+      @useBrowserGeolocation={{true}}
       @onStateChange={{this.onStateChange}}
       @onCityChange={{this.onCityChange}}
       @searchOnInit={{this.searchOnInit}}

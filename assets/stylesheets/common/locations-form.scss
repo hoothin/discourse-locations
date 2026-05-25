@@ -166,12 +166,33 @@
         align-items: center;
         min-height: 34px;
       }
+
+      .location-search-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
     }
 
-    .location-search {
+    .location-search,
+    .location-current {
       margin: 0;
       white-space: nowrap;
     }
+  }
+
+  .location-gps-status,
+  .location-gps-error {
+    @extend .location-form-instructions;
+    margin-top: 6px;
+  }
+
+  .location-gps-status {
+    color: var(--success);
+  }
+
+  .location-gps-error {
+    color: var(--danger);
   }
 
   @media screen and (max-width: 700px) {

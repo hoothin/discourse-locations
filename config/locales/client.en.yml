@@ -47,6 +47,15 @@ en:
         desc: "Locations provided by {{provider}}"
         btn:
           label: "Search exact location"
+        current:
+          label: "Use current location"
+          loading: "Getting location..."
+          locked: "GPS coordinates are locked. You can still edit prefecture and city."
+          unsupported: "This browser does not support current location lookup."
+          denied: "Location permission was denied."
+          unavailable: "Current location is unavailable. Please try again."
+          timeout: "Current location lookup timed out. Please try again."
+          error: "Unable to get current location. Please try again."
         results: "Exact location results"
         no_results: "No results."
         area_fallback: "You can publish with the selected prefecture and city."
@@ -57,6 +66,8 @@ en:
         title: "Show Location Details"
       validation:
         state: "Please enter a state, province, or prefecture."
+        city: "Please enter a city, town, or municipality."
+        coordinates: "Please provide both latitude and longitude."
       clear: "Clear"
       done: "Done"
       errors:

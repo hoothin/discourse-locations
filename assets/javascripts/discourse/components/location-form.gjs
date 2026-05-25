@@ -21,6 +21,12 @@ import {
 import GeoLocationResult from "./geo-location-result";
 import LocationSelector from "./location-selector";
 
+const BROWSER_GEOLOCATION_SOURCE = "browser_geolocation";
+const GEOLOCATION_PERMISSION_DENIED = 1;
+const GEOLOCATION_POSITION_UNAVAILABLE = 2;
+const GEOLOCATION_TIMEOUT = 3;
+const GEOLOCATION_TIMEOUT_MS = 10000;
+
 export default class LocationForm extends Component {
   @service siteSettings;
   @service site;
@@ -45,6 +51,8 @@ export default class LocationForm extends Component {
   @tracked formLatitude;
   @tracked formLongitude;
   @tracked geoLocation = {};
+  @tracked browserLocationLoading = false;
+  @tracked browserLocationError = null;
 
   context = null;
   cityDatalistId = `location-city-options-${Math.random().toString(36).slice(2)}`;
@@ -164,6 +172,18 @@ export default class LocationForm extends Component {
     return cityOptionsByPrefecture(this.formState, this.formCity);
   }
 
+  get coordinatesLocked() {
+    return Boolean(this.args.coordinatesLocked);
+  }
+
+  get exactSearchDisabled() {
+    return Boolean(this.searchDisabled || this.coordinatesLocked);
+  }
+
+  get browserLocationSupported() {
+    return typeof navigator !== "undefined" && Boolean(navigator.geolocation);
+  }
+
   keyDown(e) {
     if (this.showGeoLocation && e.keyCode === 13) {
       this.send("locationSearch");
@@ -228,6 +248,82 @@ export default class LocationForm extends Component {
     });
   }
 
+  browserLocationErrorMessage(error) {
+    switch (error?.code) {
+      case GEOLOCATION_PERMISSION_DENIED:
+        return i18n("location.geo.current.denied");
+      case GEOLOCATION_POSITION_UNAVAILABLE:
+        return i18n("location.geo.current.unavailable");
+      case GEOLOCATION_TIMEOUT:
+        return i18n("location.geo.current.timeout");
+      default:
+        return i18n("location.geo.current.error");
+    }
+  }
+
+  @action
+  useBrowserLocation() {
+    if (!this.args.useBrowserGeolocation) {
+      return;
+    }
+
+    if (!this.browserLocationSupported) {
+      this.browserLocationError = i18n("location.geo.current.unsupported");
+      return;
+    }
+
+    this.browserLocationLoading = true;
+    this.browserLocationError = null;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (this.isDestroying || this.isDestroyed) {
+          return;
+        }
+
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          this.browserLocationLoading = false;
+          this.browserLocationError = i18n("location.geo.current.unavailable");
+          return;
+        }
+
+        const currentLocation = {
+          lat: String(latitude),
+          lon: String(longitude),
+          source: BROWSER_GEOLOCATION_SOURCE,
+          captured_at: new Date(position.timestamp || Date.now()).toISOString(),
+        };
+
+        if (Number.isFinite(position.coords.accuracy)) {
+          currentLocation.accuracy = position.coords.accuracy;
+        }
+
+        this.formLatitude = currentLocation.lat;
+        this.formLongitude = currentLocation.lon;
+        this.geoLocationOptions = [];
+        this.showLocationResults = false;
+        this.browserLocationLoading = false;
+        this.args.setGeoLocation(currentLocation);
+      },
+      (error) => {
+        if (this.isDestroying || this.isDestroyed) {
+          return;
+        }
+
+        this.browserLocationLoading = false;
+        this.browserLocationError = this.browserLocationErrorMessage(error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: GEOLOCATION_TIMEOUT_MS,
+      }
+    );
+  }
+
   @action
   clearSearch() {
     this.geoLocationOptions = [];
@@ -264,6 +360,10 @@ export default class LocationForm extends Component {
 
   @action
   locationSearch() {
+    if (this.coordinatesLocked) {
+      return;
+    }
+
     let request = {};
 
     if (this.useRegionSelectors) {
@@ -449,52 +549,83 @@ export default class LocationForm extends Component {
                   <div class="location-field-row location-search-group">
                     <label class="control-label">&nbsp;</label>
                     <div class="controls">
-                      <button
-                        class="btn btn-default wizard-btn location-search"
-                        {{on "click" this.locationSearch}}
-                        disabled={{this.searchDisabled}}
-                        type="button"
-                      >
-                        {{i18n "location.geo.btn.label"}}
-                      </button>
+                      <div class="location-search-actions">
+                        <button
+                          class="btn btn-default wizard-btn location-search"
+                          {{on "click" this.locationSearch}}
+                          disabled={{this.exactSearchDisabled}}
+                          type="button"
+                        >
+                          {{i18n "location.geo.btn.label"}}
+                        </button>
+                        {{#if @useBrowserGeolocation}}
+                          <button
+                            class="btn btn-default wizard-btn location-current"
+                            {{on "click" this.useBrowserLocation}}
+                            disabled={{this.browserLocationLoading}}
+                            type="button"
+                          >
+                            {{#if this.browserLocationLoading}}
+                              {{i18n "location.geo.current.loading"}}
+                            {{else}}
+                              {{i18n "location.geo.current.label"}}
+                            {{/if}}
+                          </button>
+                        {{/if}}
+                      </div>
                     </div>
+                    {{#if this.coordinatesLocked}}
+                      <div class="location-gps-status">{{i18n
+                          "location.geo.current.locked"
+                        }}</div>
+                    {{/if}}
+                    {{#if this.browserLocationError}}
+                      <div class="location-gps-error">
+                        {{this.browserLocationError}}
+                      </div>
+                    {{/if}}
                   </div>
                 {{/if}}
               </div>
               {{#if this.showGeoLocation}}
                 {{#if this.showLocationResults}}
-                  <div class="location-results">
-                    <h4>{{i18n "location.geo.results"}}</h4>
-                    <ul>
-                      {{#if this.hasSearched}}
-                        <ConditionalLoadingSpinner
-                          @condition={{this.loadingLocations}}
-                        >
-                          {{#each this.geoLocationOptions as |l|}}
-                            <GeoLocationResult
-                              @updateGeoLocation={{this.updateGeoLocation}}
-                              @location={{l}}
-                              @geoAttrs={{this.geoAttrs}}
-                            />
-                          {{else}}
-                            <li class="no-results">{{i18n
-                                "location.geo.no_results"
-                              }}</li>
-                            {{#if this.canUseAreaFallback}}
-                              <li class="no-results area-fallback">{{i18n
-                                  "location.geo.area_fallback"
+                  {{#unless this.coordinatesLocked}}
+                    <div class="location-results">
+                      <h4>{{i18n "location.geo.results"}}</h4>
+                      <ul>
+                        {{#if this.hasSearched}}
+                          <ConditionalLoadingSpinner
+                            @condition={{this.loadingLocations}}
+                          >
+                            {{#each this.geoLocationOptions as |l|}}
+                              <GeoLocationResult
+                                @updateGeoLocation={{this.updateGeoLocation}}
+                                @location={{l}}
+                                @geoAttrs={{this.geoAttrs}}
+                              />
+                            {{else}}
+                              <li class="no-results">{{i18n
+                                  "location.geo.no_results"
                                 }}</li>
-                            {{/if}}
-                          {{/each}}
-                        </ConditionalLoadingSpinner>
-                      {{/if}}
-                    </ul>
-                  </div>
-                  {{#if this.showProvider}}
-                    <div class="location-form-instructions">{{htmlSafe
-                        (i18n "location.geo.desc" provider=this.providerDetails)
-                    }}</div>
-                  {{/if}}
+                              {{#if this.canUseAreaFallback}}
+                                <li class="no-results area-fallback">{{i18n
+                                    "location.geo.area_fallback"
+                                  }}</li>
+                              {{/if}}
+                            {{/each}}
+                          </ConditionalLoadingSpinner>
+                        {{/if}}
+                      </ul>
+                    </div>
+                    {{#if this.showProvider}}
+                      <div class="location-form-instructions">{{htmlSafe
+                          (i18n
+                            "location.geo.desc"
+                            provider=this.providerDetails
+                          )
+                        }}</div>
+                    {{/if}}
+                  {{/unless}}
                 {{/if}}
               {{/if}}
             {{else}}
@@ -677,7 +808,7 @@ export default class LocationForm extends Component {
                 <button
                   class="btn btn-default wizard-btn location-search"
                   {{on "click" this.locationSearch}}
-                  disabled={{this.searchDisabled}}
+                  disabled={{this.exactSearchDisabled}}
                   type="button"
                 >
                   {{i18n "location.geo.btn.label"}}
@@ -746,6 +877,7 @@ export default class LocationForm extends Component {
                 }}
                 step="any"
                 class="input-small input-location lat"
+                disabled={{this.coordinatesLocked}}
               />
               <div class="icon">
                 <img src="/plugins/discourse-locations/images/latitude.png" />
@@ -771,6 +903,7 @@ export default class LocationForm extends Component {
                 }}
                 step="any"
                 class="input-small input-location lon"
+                disabled={{this.coordinatesLocked}}
               />
               <div class="icon">
                 <img src="/plugins/discourse-locations/images/longitude.png" />

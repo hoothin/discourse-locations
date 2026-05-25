@@ -45,6 +45,15 @@ zh_CN:
         desc: "位置由 {{provider}} 提供"
         btn:
           label: "搜索精确位置"
+        current:
+          label: "获取当前位置"
+          loading: "正在获取位置..."
+          locked: "GPS 坐标已锁定，仍可修改都道府县与市区町村。"
+          unsupported: "此浏览器不支持获取当前位置。"
+          denied: "位置权限已被拒绝。"
+          unavailable: "当前位置不可用，请重试。"
+          timeout: "获取当前位置超时，请重试。"
+          error: "无法获取当前位置，请重试。"
         results: "精确位置结果"
         no_results: "无结果"
         area_fallback: "可使用当前选择的都道府县与市区町村发布。"
@@ -54,6 +63,8 @@ zh_CN:
         title: "显示位置详情"
       validation:
         state: "请输入省/都道府县。"
+        city: "请输入城市/区町村。"
+        coordinates: "请同时提供纬度与经度。"
       clear: "清除"
       done: "完成"
       errors:

@@ -10,6 +10,9 @@ enabled_site_setting :location_enabled
 
 module ::Locations
   PLUGIN_NAME = "discourse-locations"
+  BROWSER_GEOLOCATION_SOURCE = "browser_geolocation"
+  EXACT_PRECISION = "exact"
+  GPS_PRECISION = "gps"
 end
 
 require_relative "lib/locations/engine"
@@ -72,6 +75,90 @@ after_initialize do
     return false if !geo_location.is_a?(Hash)
 
     geo_location["lat"].present? && geo_location["lon"].present?
+  end
+
+  def Locations.coordinate_in_range?(value, min, max)
+    coordinate = Float(value)
+    coordinate.finite? && coordinate >= min && coordinate <= max
+  rescue ArgumentError, TypeError
+    false
+  end
+
+  def Locations.valid_coordinate_pair?(geo_location)
+    return false if !geo_location.is_a?(Hash)
+
+    coordinate_in_range?(geo_location["lat"], -90, 90) &&
+      coordinate_in_range?(geo_location["lon"], -180, 180)
+  end
+
+  def Locations.normalize_topic_location(location)
+    parsed_location = Locations::Helper.parse_location(location)
+    if parsed_location.respond_to?(:to_unsafe_h)
+      parsed_location = parsed_location.to_unsafe_h
+    end
+    return parsed_location if !parsed_location.is_a?(Hash)
+
+    normalized_location = parsed_location.deep_stringify_keys
+    geo_location = normalized_location["geo_location"]
+    if geo_location.respond_to?(:to_unsafe_h)
+      geo_location = geo_location.to_unsafe_h
+    end
+    if geo_location.respond_to?(:deep_stringify_keys)
+      geo_location = geo_location.deep_stringify_keys
+    end
+
+    gps_requested =
+      normalized_location["source"] == BROWSER_GEOLOCATION_SOURCE ||
+        normalized_location["precision"] == GPS_PRECISION ||
+        ActiveModel::Type::Boolean.new.cast(normalized_location["gps_locked"])
+
+    if gps_requested
+      if !valid_coordinate_pair?(geo_location)
+        raise Discourse::InvalidParameters.new, I18n.t("location.errors.invalid")
+      end
+
+      normalized_location["geo_location"] = {
+        "lat" => geo_location["lat"].to_s,
+        "lon" => geo_location["lon"].to_s,
+      }
+      normalized_location["source"] = BROWSER_GEOLOCATION_SOURCE
+      normalized_location["precision"] = EXACT_PRECISION
+      normalized_location["gps_locked"] = true
+
+      if normalized_location["accuracy"].present?
+        accuracy = Float(normalized_location["accuracy"])
+        if accuracy.finite? && accuracy >= 0
+          normalized_location["accuracy"] = accuracy
+        else
+          normalized_location.delete("accuracy")
+        end
+      end
+    elsif valid_coordinate_pair?(geo_location)
+      geo_location["lat"] = geo_location["lat"].to_s
+      geo_location["lon"] = geo_location["lon"].to_s
+      normalized_location["geo_location"] = geo_location
+      if normalized_location["precision"].blank?
+        normalized_location["precision"] = EXACT_PRECISION
+      end
+    else
+      normalized_location.delete("geo_location")
+      if normalized_location["precision"] != "area"
+        normalized_location["precision"] = "area"
+      end
+    end
+
+    if normalized_location["captured_at"].present?
+      captured_at = normalized_location["captured_at"].to_s
+      if captured_at.length <= 64
+        normalized_location["captured_at"] = captured_at
+      else
+        normalized_location.delete("captured_at")
+      end
+    end
+
+    normalized_location
+  rescue JSON::ParserError, ArgumentError, TypeError
+    raise Discourse::InvalidParameters.new, I18n.t("location.errors.invalid")
   end
 
   def Locations.ip_auto_lookup_mode
@@ -401,7 +488,7 @@ on(:custom_wizard_ready) do
           ).perform
 
         if location.present?
-          location = Locations::Helper.parse_location(location)
+          location = Locations.normalize_topic_location(location)
 
           location_params = {}
           location_params["location"] = location
