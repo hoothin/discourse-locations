@@ -179,6 +179,16 @@
       margin: 0;
       white-space: nowrap;
     }
+
+    .location-current {
+      justify-content: center;
+      min-width: 34px;
+      padding-inline: 10px;
+
+      .d-icon {
+        margin-right: 0;
+      }
+    }
   }
 
   .location-gps-status,

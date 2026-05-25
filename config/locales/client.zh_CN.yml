@@ -46,9 +46,8 @@ zh_CN:
         btn:
           label: "搜索精确位置"
         current:
-          label: "获取当前位置"
-          loading: "正在获取位置..."
-          locked: "GPS 坐标已锁定，仍可修改都道府县与市区町村。"
+          title: "定位"
+          locked: "坐标已锁定"
           unsupported: "此浏览器不支持获取当前位置。"
           denied: "位置权限已被拒绝。"
           unavailable: "当前位置不可用，请重试。"

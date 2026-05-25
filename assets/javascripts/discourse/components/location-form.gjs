@@ -9,6 +9,7 @@ import { service } from "@ember/service";
 import { htmlSafe } from "@ember/template";
 import { hash } from "rsvp";
 import ConditionalLoadingSpinner from "discourse/components/conditional-loading-spinner";
+import icon from "discourse/helpers/d-icon";
 import { ajax } from "discourse/lib/ajax";
 import ComboBox from "discourse/select-kit/components/combo-box";
 import { i18n } from "discourse-i18n";
@@ -564,12 +565,10 @@ export default class LocationForm extends Component {
                             {{on "click" this.useBrowserLocation}}
                             disabled={{this.browserLocationLoading}}
                             type="button"
+                            title={{i18n "location.geo.current.title"}}
+                            aria-label={{i18n "location.geo.current.title"}}
                           >
-                            {{#if this.browserLocationLoading}}
-                              {{i18n "location.geo.current.loading"}}
-                            {{else}}
-                              {{i18n "location.geo.current.label"}}
-                            {{/if}}
+                            {{icon "location-dot"}}
                           </button>
                         {{/if}}
                       </div>

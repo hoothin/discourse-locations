@@ -48,9 +48,8 @@ en:
         btn:
           label: "Search exact location"
         current:
-          label: "Use current location"
-          loading: "Getting location..."
-          locked: "GPS coordinates are locked. You can still edit prefecture and city."
+          title: "Locate"
+          locked: "Coordinates locked."
           unsupported: "This browser does not support current location lookup."
           denied: "Location permission was denied."
           unavailable: "Current location is unavailable. Please try again."

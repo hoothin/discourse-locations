@@ -47,9 +47,8 @@ zh-CN:
         btn:
           label: "搜尋精確位置"
         current:
-          label: "取得目前位置"
-          loading: "正在取得位置..."
-          locked: "GPS 座標已鎖定，仍可修改都道府縣與市區町村。"
+          title: "定位"
+          locked: "座標已鎖定"
           unsupported: "此瀏覽器不支援取得目前位置。"
           denied: "位置權限已被拒絕。"
           unavailable: "目前位置不可用，請再試一次。"
