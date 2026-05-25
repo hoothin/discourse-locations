@@ -186,7 +186,20 @@
       padding-inline: 10px;
 
       .d-icon {
+        color: var(--primary);
+        fill: currentColor;
         margin-right: 0;
+        opacity: 1;
+      }
+
+      &:hover,
+      &:focus,
+      &:active {
+        .d-icon {
+          color: var(--primary);
+          fill: currentColor;
+          opacity: 1;
+        }
       }
     }
   }
