@@ -10,6 +10,7 @@
 }
 
 .location-form {
+  container-type: inline-size;
   display: flex;
   overflow: visible;
 
@@ -18,6 +19,7 @@
   }
 
   .address {
+    container-type: inline-size;
     padding-right: 20px;
     width: 100%;
   }
@@ -241,6 +243,42 @@
     }
   }
 
+  @container (max-width: 700px) {
+    .location-region-grid,
+    .location-exact-grid {
+      display: block !important;
+      max-width: 100%;
+
+      .location-field-row,
+      .controls {
+        box-sizing: border-box;
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+      }
+
+      .location-field-row {
+        margin-bottom: 14px;
+      }
+
+      input.input-location,
+      div.input-location,
+      .select-kit.input-location,
+      .combo-box.input-location,
+      .prefecture-select {
+        box-sizing: border-box;
+        max-width: 100%;
+        min-width: 0;
+        width: 100% !important;
+      }
+    }
+
+    .location-exact-grid .location-search-group .controls,
+    .location-search-actions {
+      flex-wrap: wrap;
+    }
+  }
+
   .geo-map {
     height: 400px;
   }
@@ -304,6 +342,23 @@ body.mobile-view {
         max-width: 100%;
         min-width: 0;
         width: 100% !important;
+      }
+    }
+  }
+
+  &.custom-wizard {
+    .checkbox-field.rules_agree,
+    .checkbox-field.checkbox-rules-agree {
+      align-items: flex-start;
+      flex-wrap: wrap;
+
+      & > .field-description {
+        flex: 1 0 100%;
+        margin-left: 0;
+        margin-top: 0.35em;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        white-space: normal;
       }
     }
   }
