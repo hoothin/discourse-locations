@@ -263,6 +263,52 @@ div.input-location {
   width: 100px;
 }
 
+body.mobile-view {
+  .location-form {
+    flex-direction: column;
+
+    .address {
+      box-sizing: border-box;
+      padding-right: 0;
+      width: 100%;
+    }
+
+    .address + .coordinates {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .location-region-grid,
+    .location-exact-grid {
+      display: block !important;
+      max-width: 100%;
+
+      .location-field-row,
+      .controls {
+        box-sizing: border-box;
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+      }
+
+      .location-field-row {
+        margin-bottom: 14px;
+      }
+
+      input.input-location,
+      div.input-location,
+      .select-kit.input-location,
+      .combo-box.input-location,
+      .prefecture-select {
+        box-sizing: border-box;
+        max-width: 100%;
+        min-width: 0;
+        width: 100% !important;
+      }
+    }
+  }
+}
+
 .location-selector-container {
   position: relative;
 
