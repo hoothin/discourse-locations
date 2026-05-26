@@ -108,8 +108,8 @@ after_initialize do
     end
 
     gps_requested =
-      normalized_location["source"] == BROWSER_GEOLOCATION_SOURCE ||
-        normalized_location["precision"] == GPS_PRECISION ||
+      normalized_location["source"] == Locations::BROWSER_GEOLOCATION_SOURCE ||
+        normalized_location["precision"] == Locations::GPS_PRECISION ||
         ActiveModel::Type::Boolean.new.cast(normalized_location["gps_locked"])
 
     if gps_requested
@@ -121,8 +121,8 @@ after_initialize do
         "lat" => geo_location["lat"].to_s,
         "lon" => geo_location["lon"].to_s,
       }
-      normalized_location["source"] = BROWSER_GEOLOCATION_SOURCE
-      normalized_location["precision"] = EXACT_PRECISION
+      normalized_location["source"] = Locations::BROWSER_GEOLOCATION_SOURCE
+      normalized_location["precision"] = Locations::EXACT_PRECISION
       normalized_location["gps_locked"] = true
 
       if normalized_location["accuracy"].present?
@@ -138,7 +138,7 @@ after_initialize do
       geo_location["lon"] = geo_location["lon"].to_s
       normalized_location["geo_location"] = geo_location
       if normalized_location["precision"].blank?
-        normalized_location["precision"] = EXACT_PRECISION
+        normalized_location["precision"] = Locations::EXACT_PRECISION
       end
     else
       normalized_location.delete("geo_location")
