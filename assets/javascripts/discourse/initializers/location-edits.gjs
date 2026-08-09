@@ -1,5 +1,4 @@
 /* eslint-disable ember/no-observers */
-import { computed } from "@ember/object";
 import { next, scheduleOnce } from "@ember/runloop";
 import { observes } from "@ember-decorators/object";
 import SortableColumn from "discourse/components/topic-list/header/sortable-column";
@@ -10,6 +9,7 @@ import I18n, { i18n } from "discourse-i18n";
 
 const NEW_TOPIC_KEY = "new_topic";
 const LOCATIONS_LIST_ROUTES = ["discovery.nearby"];
+const LOCATION_TOPIC_SUBTYPES = new Set(["event", "question", "general"]);
 
 function formatDistance(distance) {
   if (!Number.isFinite(distance)) {
@@ -80,6 +80,137 @@ function parseLocation(rawLocation) {
 
 function customFieldEnabled(value) {
   return value === true || value === "true" || value === "t" || value === 1;
+}
+
+/**
+ * Determines whether a category enables topic locations.
+
+ * @this {object}
+ * @param {number|string|null} [categoryId=this.categoryId] Category identifier.
+ * @returns {boolean} Whether the category supports locations.
+ */
+function categorySupportsLocation(categoryId = this.categoryId) {
+  if (!categoryId) {
+    return false;
+  }
+
+  const category = this.site.categories.find((item) => item.id === categoryId);
+
+  return customFieldEnabled(category?.custom_fields?.location_enabled);
+}
+
+/**
+ * Computes whether location controls should be shown in the composer.
+
+ * @this {object}
+ * @returns {boolean} Whether composer location controls are available.
+ */
+function showComposerLocationControls() {
+  if (!this.topicFirstPost) {
+    return false;
+  }
+  if (this.forceLocationControls) {
+    return true;
+  }
+
+  return this.categorySupportsLocation();
+}
+
+/**
+ * Prefills or clears the composer location for the current draft.
+
+ * @this {object}
+ * @returns {void}
+ */
+function maybeSetupDefaultLocation() {
+  const draftKey = this.draftKey;
+  if (!draftKey) {
+    next(this, this._maybeSetupDefaultLocation);
+    return;
+  }
+
+  if (!draftKey.startsWith(NEW_TOPIC_KEY) || !this.creatingTopic) {
+    return;
+  }
+
+  if (!this.showLocationControls) {
+    if (this.location !== null) {
+      this.location = null;
+    }
+    return;
+  }
+
+  if (parseLocation(this.location)) {
+    return;
+  }
+
+  if (this.location !== null) {
+    this.location = null;
+  }
+
+  const userGeoLocation =
+    parseGeoLocation(this.user?.geo_location) ||
+    parseGeoLocation(this.user?.custom_fields?.geo_location);
+
+  if (this.siteSettings.location_topic_default === "user" && userGeoLocation) {
+    this.location = { geo_location: userGeoLocation };
+  }
+}
+
+/**
+ * Retries default-location setup after the composer receives its draft key.
+
+ * @this {object}
+ * @returns {void}
+ */
+function retryDefaultLocationSetup() {
+  this.maybeSetupDefaultLocation();
+}
+
+/**
+ * Computes whether a topic supports location controls.
+
+ * @this {object}
+ * @returns {boolean|string|number|null|undefined} A truthy value when controls are enabled.
+ */
+function showTopicLocationControls() {
+  const categoryEnabled = this.category?.custom_fields?.location_enabled;
+  return LOCATION_TOPIC_SUBTYPES.has(this.subtype) || categoryEnabled;
+}
+
+/**
+ * Registers Discourse model extensions before the models are first used.
+
+ * @param {import("discourse/lib/plugin-api").PluginApi} api Discourse plugin API.
+ * @returns {void}
+ */
+function registerLocationModelExtensions(api) {
+  api.addModelField("composer", "location", { defaultValue: null });
+  api.addModelMethod(
+    "composer",
+    "categorySupportsLocation",
+    categorySupportsLocation
+  );
+  api.addModelGetter(
+    "composer",
+    "showLocationControls",
+    showComposerLocationControls
+  );
+  api.addModelMethod(
+    "composer",
+    "maybeSetupDefaultLocation",
+    maybeSetupDefaultLocation
+  );
+  api.addModelMethod(
+    "composer",
+    "_maybeSetupDefaultLocation",
+    retryDefaultLocationSetup
+  );
+  api.addModelGetter(
+    "topic",
+    "showLocationControls",
+    showTopicLocationControls
+  );
 }
 
 const locationsDistanceHeader = <template>
@@ -164,99 +295,7 @@ export default {
             }
           }
       );
-      api.modifyClass(
-        "model:composer",
-        (Superclass) =>
-          class extends Superclass {
-            init() {
-              super.init(...arguments);
-              this._maybeSetupDefaultLocation();
-            }
-
-            categorySupportsLocation(categoryId = this.categoryId) {
-              if (!categoryId) {
-                return false;
-              }
-
-              const category = this.site.categories.find(
-                (item) => item.id === categoryId
-              );
-
-              return customFieldEnabled(
-                category?.custom_fields?.location_enabled
-              );
-            }
-
-            @computed("categoryId", "topicFirstPost", "forceLocationControls")
-            get showLocationControls() {
-              const topicFirstPost = this.get("topicFirstPost");
-              const force = this.get("forceLocationControls");
-
-              if (!topicFirstPost) {
-                return false;
-              }
-              if (force) {
-                return true;
-              }
-
-              return this.categorySupportsLocation();
-            }
-
-            clearState() {
-              super.clearState(...arguments);
-              this.set("location", null);
-            }
-
-            @observes(
-              "composeState",
-              "draftKey",
-              "user.geo_location",
-              "user.custom_fields.geo_location"
-            )
-            _maybeSetupDefaultLocation() {
-              const draftKey = this.draftKey;
-              if (!draftKey) {
-                next(this, this._maybeSetupDefaultLocation);
-                return;
-              }
-
-              if (!draftKey.startsWith(NEW_TOPIC_KEY) || !this.creatingTopic) {
-                return;
-              }
-
-              if (!this.showLocationControls) {
-                if (this.location !== null) {
-                  this.set("location", null);
-                }
-                return;
-              }
-
-              const currentLocation = parseLocation(this.location);
-              if (currentLocation) {
-                return;
-              }
-
-              if (this.location !== null) {
-                this.set("location", null);
-              }
-
-              const topicDefaultLocation =
-                this.siteSettings.location_topic_default;
-              const userGeoLocation =
-                parseGeoLocation(this.user?.geo_location) ||
-                parseGeoLocation(this.user?.custom_fields?.geo_location);
-              // NB: we can't use the siteSettings, nor currentUser values set in the initialiser here
-              // because in QUnit they will not be defined as the initialiser only runs once
-              // so this will break all tests, even if in runtime it may work.
-              // so solution is to use the values provided by the Composer model under 'this'.
-              if (topicDefaultLocation === "user" && userGeoLocation) {
-                this.set("location", {
-                  geo_location: userGeoLocation,
-                });
-              }
-            }
-          }
-      );
+      registerLocationModelExtensions(api);
 
       api.modifyClass(
         "component:composer-body",
@@ -304,24 +343,6 @@ export default {
               };
 
               scheduleOnce("afterRender", this, applyClasses);
-            }
-          }
-      );
-
-      const subtypeShowLocation = ["event", "question", "general"];
-      api.modifyClass(
-        "model:topic",
-        (Superclass) =>
-          class extends Superclass {
-            // @computed("subtype", "category.custom_fields.location_enabled")
-            get showLocationControls() {
-              const subtype = this.get("subtype");
-              const categoryEnabled = this.get(
-                "category.custom_fields.location_enabled"
-              );
-              return (
-                subtypeShowLocation.indexOf(subtype) > -1 || categoryEnabled
-              );
             }
           }
       );
